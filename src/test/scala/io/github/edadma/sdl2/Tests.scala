@@ -16,3 +16,9 @@ class Tests extends AnyFreeSpec with Matchers:
   "Color carries an explicit alpha" in {
     Color(10, 20, 30, 40).a shouldBe 40
   }
+
+  "Color.blend interpolates and clamps" in {
+    Color.blend(Color(0, 0, 0), Color(100, 200, 40), 0.5) shouldBe Color(50, 100, 20)
+    Color.blend(Color(10, 10, 10), Color(20, 20, 20), 0.0) shouldBe Color(10, 10, 10)
+    Color.blend(Color(0, 0, 0), Color(255, 255, 255), 2.0) shouldBe Color(255, 255, 255)
+  }

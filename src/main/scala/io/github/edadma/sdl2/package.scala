@@ -77,6 +77,18 @@ package object sdl2:
     val Black = Color(0, 0, 0)
     val White = Color(255, 255, 255)
 
+    /** Linear interpolation from `a` (t=0) to `b` (t=1), clamped — handy for
+      * fades (e.g. trails blending toward the background).
+      */
+    def blend(a: Color, b: Color, t: Double): Color =
+      val u = if t < 0.0 then 0.0 else if t > 1.0 then 1.0 else t
+      Color(
+        (a.r + (b.r - a.r) * u).toInt,
+        (a.g + (b.g - a.g) * u).toInt,
+        (a.b + (b.b - a.b) * u).toInt,
+        (a.a + (b.a - a.a) * u).toInt,
+      )
+
   // ---- top-level lifecycle ----
 
   /** Tell SDL we provide our own `main` (required when not using SDL's main shim). */
@@ -149,6 +161,8 @@ package object sdl2:
       gfx.aalineRGBA(ptr, x1.toShort, y1.toShort, x2.toShort, y2.toShort, c.r.toUByte, c.g.toUByte, c.b.toUByte, c.a.toUByte)
     def line(x1: Int, y1: Int, x2: Int, y2: Int, c: Color): Unit =
       gfx.lineRGBA(ptr, x1.toShort, y1.toShort, x2.toShort, y2.toShort, c.r.toUByte, c.g.toUByte, c.b.toUByte, c.a.toUByte)
+    def thickLine(x1: Int, y1: Int, x2: Int, y2: Int, width: Int, c: Color): Unit =
+      gfx.thickLineRGBA(ptr, x1.toShort, y1.toShort, x2.toShort, y2.toShort, width.toUByte, c.r.toUByte, c.g.toUByte, c.b.toUByte, c.a.toUByte)
     def drawCircle(x: Int, y: Int, radius: Int, c: Color): Unit =
       gfx.aacircleRGBA(ptr, x.toShort, y.toShort, radius.toShort, c.r.toUByte, c.g.toUByte, c.b.toUByte, c.a.toUByte)
     /** Filled, antialiased circle. */

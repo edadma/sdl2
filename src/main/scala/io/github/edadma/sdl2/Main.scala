@@ -43,6 +43,9 @@ package io.github.edadma.sdl2
   val cs      = Array.tabulate(n)(i => palette(i % palette.length))
   val bg      = Color.fromRGB(0x0a0a18)
 
+  val trailLen = 36
+  val trails   = Array.fill(n)(scala.collection.mutable.ArrayDeque.empty[(Double, Double)])
+
   var running = true
   while running do
     var ev = pollEvent()
@@ -91,9 +94,29 @@ package io.github.edadma.sdl2
         j += 1
       i += 1
 
+    // Record trail points (newest at the tail).
+    i = 0
+    while i < n do
+      val tr = trails(i)
+      tr.append((xs(i), ys(i)))
+      while tr.length > trailLen do tr.removeHead()
+      i += 1
+
     // Draw into the 2x target, then downscale to the window (antialiasing).
     renderer.setTarget(target)
     renderer.clear(bg)
+    // Trails first, behind the balls, fading toward the background.
+    i = 0
+    while i < n do
+      val tr = trails(i)
+      var k  = 1
+      while k < tr.length do
+        val (x0, y0) = tr(k - 1)
+        val (x1, y1) = tr(k)
+        val t        = k.toDouble / (tr.length - 1)
+        renderer.thickLine((x0 * ss).toInt, (y0 * ss).toInt, (x1 * ss).toInt, (y1 * ss).toInt, ss + 1, Color.blend(bg, cs(i), t))
+        k += 1
+      i += 1
     i = 0
     while i < n do
       renderer.fillCircle((xs(i) * ss).toInt, (ys(i) * ss).toInt, rs(i) * ss, cs(i))
