@@ -17,6 +17,15 @@ package io.github.edadma.sdl2
   if window.isNull then sys.error(s"createWindow failed: $error")
   val renderer = window.createRenderer()
 
+  // Antialias by supersampling: draw into a 2x target texture and downscale it
+  // with linear filtering on copy. SDL2_gfx's aacircle edge is barely visible;
+  // this smooths everything uniformly, like the JVM/canvas renderers.
+  val ss     = 2
+  val texW   = width * ss
+  val texH   = height * ss
+  val target = renderer.createTexture(window.pixelFormat, TEXTUREACCESS_TARGET, texW, texH)
+  target.setScaleMode(SCALEMODE_LINEAR)
+
   // The map pattern in action: an ordinary Scala closure bridged to SDL's C
   // event callback. Fired while events are pumped, on this thread.
   addEventWatch { e =>
@@ -43,7 +52,7 @@ package io.github.edadma.sdl2
       else if e.kind == KEYDOWN && e.keyScancode == Scancode.Escape then running = false
       ev = pollEvent()
 
-    renderer.clear(bg)
+    // Integrate, then bounce off the walls.
     var i = 0
     while i < n do
       xs(i) += vxs(i)
@@ -53,10 +62,47 @@ package io.github.edadma.sdl2
       if xs(i) > width - r then { xs(i) = width - r; vxs(i) = -vxs(i) }
       if ys(i) < r then { ys(i) = r; vys(i) = -vys(i) }
       if ys(i) > height - r then { ys(i) = height - r; vys(i) = -vys(i) }
-      renderer.fillCircle(xs(i).toInt, ys(i).toInt, r, cs(i))
       i += 1
+
+    // Elastic ball-ball collisions (mass ∝ area). O(n²), tiny n.
+    i = 0
+    while i < n do
+      var j = i + 1
+      while j < n do
+        val dx      = xs(j) - xs(i)
+        val dy      = ys(j) - ys(i)
+        val dist    = math.sqrt(dx * dx + dy * dy)
+        val minDist = (rs(i) + rs(j)).toDouble
+        if dist > 0.0 && dist < minDist then
+          val nx = dx / dist
+          val ny = dy / dist
+          val mi = (rs(i) * rs(i)).toDouble
+          val mj = (rs(j) * rs(j)).toDouble
+          // Separate the overlap so they don't stick, split by mass.
+          val overlap = minDist - dist
+          xs(i) -= nx * overlap * (mj / (mi + mj)); ys(i) -= ny * overlap * (mj / (mi + mj))
+          xs(j) += nx * overlap * (mi / (mi + mj)); ys(j) += ny * overlap * (mi / (mi + mj))
+          // Exchange momentum along the normal only if they're approaching.
+          val vn = (vxs(i) - vxs(j)) * nx + (vys(i) - vys(j)) * ny
+          if vn > 0.0 then
+            val k = 2.0 * vn / (mi + mj)
+            vxs(i) -= k * mj * nx; vys(i) -= k * mj * ny
+            vxs(j) += k * mi * nx; vys(j) += k * mi * ny
+        j += 1
+      i += 1
+
+    // Draw into the 2x target, then downscale to the window (antialiasing).
+    renderer.setTarget(target)
+    renderer.clear(bg)
+    i = 0
+    while i < n do
+      renderer.fillCircle((xs(i) * ss).toInt, (ys(i) * ss).toInt, rs(i) * ss, cs(i))
+      i += 1
+    renderer.resetTarget()
+    renderer.copy(target)
     renderer.present()
 
+  target.destroy()
   renderer.destroy()
   window.destroy()
   quit()
