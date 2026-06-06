@@ -218,7 +218,7 @@ package object sdl2:
     if sdl.SDL_PollEvent(eventBuf) != 0 then Some(new Event(eventBuf)) else None
 
   /** A view over the current SDL_Event buffer. Field accessors are only
-    * meaningful for the matching [[kind]] (the underlying struct is a union).
+    * meaningful for the matching `kind` (the underlying struct is a union).
     * Offsets are the stable SDL2 64-bit ABI layout.
     */
   implicit class Event(val ptr: Ptr[Byte]) extends AnyVal:
