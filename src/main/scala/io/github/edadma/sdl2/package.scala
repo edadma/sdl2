@@ -151,9 +151,22 @@ package object sdl2:
     def present(): Unit                 = sdl.SDL_RenderPresent(ptr)
     def setTarget(t: Texture): Unit     = sdl.SDL_SetRenderTarget(ptr, t.ptr)
     def resetTarget(): Unit             = sdl.SDL_SetRenderTarget(ptr, null)
-    def copy(t: Texture): Unit          = sdl.SDL_RenderCopy(ptr, t.ptr, null, null)
+    /** Blit a whole texture across the entire render target. */
+    def copy(t: Texture): Unit = sdl.SDL_RenderCopy(ptr, t.ptr, null, null)
+    /** Blit a texture into a destination rectangle, in target pixels. */
+    def copy(t: Texture, x: Int, y: Int, w: Int, h: Int): Unit =
+      val dst = stackalloc[CInt](4)
+      dst(0) = x; dst(1) = y; dst(2) = w; dst(3) = h
+      sdl.SDL_RenderCopy(ptr, t.ptr, null, dst.asInstanceOf[Ptr[Byte]])
+    /** Blit a texture at `(x, y)` using its own pixel size. */
+    def copy(t: Texture, x: Int, y: Int): Unit =
+      val (w, h) = t.size
+      copy(t, x, y, w, h)
     def createTexture(format: Int, access: Int, w: Int, h: Int): Texture =
       new Texture(sdl.SDL_CreateTexture(ptr, format.toUInt, access, w, h))
+    /** Upload a CPU surface (e.g. from SDL2_ttf) to a GPU texture. */
+    def createTextureFromSurface(s: Surface): Texture =
+      new Texture(sdl.SDL_CreateTextureFromSurface(ptr, s.ptr))
     def destroy(): Unit = sdl.SDL_DestroyRenderer(ptr)
 
     // Antialiased / filled primitives via SDL2_gfx.
@@ -173,9 +186,25 @@ package object sdl2:
       gfx.boxRGBA(ptr, x1.toShort, y1.toShort, x2.toShort, y2.toShort, c.r.toUByte, c.g.toUByte, c.b.toUByte, c.a.toUByte)
 
   implicit class Texture(val ptr: sdl.SDL_Texture) extends AnyVal:
-    def isNull: Boolean             = ptr == null
+    def isNull: Boolean               = ptr == null
     def setScaleMode(mode: Int): Unit = sdl.SDL_SetTextureScaleMode(ptr, mode)
-    def destroy(): Unit             = sdl.SDL_DestroyTexture(ptr)
+    /** The texture's `(width, height)` in pixels. */
+    def size: (Int, Int) =
+      val w = stackalloc[CInt]()
+      val h = stackalloc[CInt]()
+      sdl.SDL_QueryTexture(ptr, null, null, w, h)
+      (!w, !h)
+    def destroy(): Unit = sdl.SDL_DestroyTexture(ptr)
+
+  /** A CPU-side pixel buffer — produced by SDL2_ttf text rendering, then
+    * uploaded to a [[Texture]] via [[Renderer.createTextureFromSurface]] and
+    * freed. `width`/`height` read the SDL_Surface struct (64-bit layout).
+    */
+  implicit class Surface(val ptr: sdl.SDL_Surface) extends AnyVal:
+    def isNull: Boolean  = ptr == null
+    def width: Int       = !((ptr + 16).asInstanceOf[Ptr[CInt]])
+    def height: Int      = !((ptr + 20).asInstanceOf[Ptr[CInt]])
+    def free(): Unit     = sdl.SDL_FreeSurface(ptr)
 
   // ---- events ----
 

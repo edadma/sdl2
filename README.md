@@ -31,7 +31,7 @@ brew install sdl2 sdl2_gfx        # macOS
 ## Usage
 
 ```scala
-libraryDependencies += "io.github.edadma" %%% "sdl2" % "0.0.1"
+libraryDependencies += "io.github.edadma" %%% "sdl2" % "0.0.2"
 ```
 
 ```scala
@@ -94,7 +94,9 @@ renderer.copy(target); renderer.present()
 ## Coverage
 
 Lifecycle, hints, window, renderer (draw colour/blend, clear, point/line/rect,
-render targets, present), textures (create/scale mode), SDL2_gfx primitives
-(`aaLine`, `line`, `drawCircle`, `fillCircle`, `fillBox`), event polling with
-field accessors, event watches, and keyboard/mouse state with a `Scancode`
-table. Contributions to widen the surface are welcome.
+render targets, full and positioned `copy`, present), textures (create, create
+from surface, scale mode, `size`), surfaces (`width`/`height`/`free`), SDL2_gfx
+primitives (`aaLine`, `line`, `drawCircle`, `fillCircle`, `fillBox`), event
+polling with field accessors, event watches, and keyboard/mouse state with a
+`Scancode` table. The surface/texture bridge supports companion libraries such
+as SDL2_ttf. Contributions to widen the surface are welcome.

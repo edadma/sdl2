@@ -15,6 +15,7 @@ object LibSDL2:
   type SDL_Window   = Ptr[Byte]
   type SDL_Renderer = Ptr[Byte]
   type SDL_Texture  = Ptr[Byte]
+  type SDL_Surface  = Ptr[Byte]
 
   // SDL_Event is a ~56-byte union; the high-level layer keeps one buffer and
   // reads fields by their (ABI-stable, 64-bit) offsets.
@@ -48,8 +49,11 @@ object LibSDL2:
   def SDL_SetRenderTarget(renderer: SDL_Renderer, texture: SDL_Texture): CInt                   = extern
 
   def SDL_CreateTexture(renderer: SDL_Renderer, format: UInt, access: CInt, w: CInt, h: CInt): SDL_Texture = extern
+  def SDL_CreateTextureFromSurface(renderer: SDL_Renderer, surface: SDL_Surface): SDL_Texture   = extern
   def SDL_DestroyTexture(texture: SDL_Texture): Unit                                            = extern
   def SDL_SetTextureScaleMode(texture: SDL_Texture, scaleMode: CInt): CInt                      = extern
+  def SDL_QueryTexture(texture: SDL_Texture, format: Ptr[UInt], access: Ptr[CInt], w: Ptr[CInt], h: Ptr[CInt]): CInt = extern
+  def SDL_FreeSurface(surface: SDL_Surface): Unit                                               = extern
 
   def SDL_PollEvent(event: SDL_Event): CInt                  = extern
   def SDL_GetKeyboardState(numkeys: Ptr[CInt]): Ptr[UByte]   = extern
