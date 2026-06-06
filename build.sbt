@@ -50,6 +50,11 @@ scalacOptions ++= Seq(
   "-language:existentials",
 )
 
+// scaladoc doesn't support the Scala Native compiler plugin (-Xplugin: nscplugin)
+// that sbt-scala-native adds for compilation; drop it from the doc task so
+// `doc` (and therefore `publishSigned`) is warning-free.
+Compile / doc / scalacOptions ~= { _.filterNot(_.startsWith("-Xplugin")) }
+
 libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.19" % "test"
 
 publishMavenStyle      := true
