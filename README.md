@@ -31,7 +31,7 @@ brew install sdl2 sdl2_gfx        # macOS
 ## Usage
 
 ```scala
-libraryDependencies += "io.github.edadma" %%% "sdl2" % "0.0.2"
+libraryDependencies += "io.github.edadma" %%% "sdl2" % "0.0.3"
 ```
 
 ```scala
